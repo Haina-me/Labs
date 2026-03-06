@@ -1,6 +1,10 @@
 function* dayGenerator() {
+    const fixed = new Date();
     let day = "Monday";
     while (true) {
+        if (new Date() - fixed >= 10000) {
+            break;
+        }
         yield day;
         day = getNextDay(day);
     }
