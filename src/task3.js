@@ -1,21 +1,34 @@
+function sum(a, b) {
+  console.log(`${a}+${b}`);
+  return a + b;
+}
+
+function options(strategyType, size, timeToLive) {
+  return {
+    strategy: strategyType,
+    maxSize: size,
+    ttl: timeToLive,
+  };
+}
+
 function memoized(fnIN, options) {
 
   const cache = new Map();
 
   return function (...args) {
-    //повертаємо нову функцію при виклику memoized(sum);
-    const key = JSON.stringify(args); //створюємо ключ на основі аргументів
+
+    const key = JSON.stringify(args);
 
     if (cache.has(key)) {
-      // якщо є кешоване значення для цього ключа
-      const cacheEntry = cache.get(key); // отримуємо кешоване значення
+
+      const cacheEntry = cache.get(key);
 
       if (options.ttl && Date.now() - cacheEntry.createdAt > options.ttl) {
-        cache.delete(key); //видаляє запис, якщо він перебуває в кеші довше, ніж дозволено. (Time-Based Expiry)
+        cache.delete(key);
       } else {
 
         if (options.strategy === "LRU") {
-          cache.delete(key); 
+          cache.delete(key);
           cache.set(key, cacheEntry);
         }
 
@@ -25,7 +38,7 @@ function memoized(fnIN, options) {
       }
     }
 
-    if (options.maxSize && cache.size >= options.maxSize){
+    if (options.maxSize && cache.size >= options.maxSize) {
 
       if (options.strategy === 'LRU') {
         const oldestKey = cache.keys().next().value;
@@ -52,7 +65,7 @@ function memoized(fnIN, options) {
     const result = fnIN(...args);
 
     cache.set(key, {
-      // зберігаємо результат у кеші
+
       value: result,
       createdAt: Date.now(),
       lastAccessed: Date.now(),
@@ -63,23 +76,21 @@ function memoized(fnIN, options) {
   };
 }
 
-function options(strategyType, size, timeToLive) {
-  return {
-    strategy: strategyType,
-    maxSize: size,
-    ttl: timeToLive,
-  };
-}
-
-const myOptions = options("LRU", 3, 5000); // обираємо політику LRU, LFU, TTL
-
-function sum(a, b) {
-  return a + b;
-}
-
+const myOptions = options("LRU", 3, 5000);
 const memoizedSum = memoized(sum, myOptions);
-memoizedSum(1, 2);
 
-/*cache.has(key)      // чи є такий ключ
-cache.get(key)      // дістати значення
-cache.delete(key)   // видалити*/
+console.log(memoizedSum(1, 2));
+console.log(memoizedSum(1, 2));
+console.log(memoizedSum(6, 7));
+console.log(memoizedSum(8, 9));
+
+const lfuOpts = options("LFU", 2, 10000);
+const memoLFU = memoized(sum, lfuOpts);
+
+memoLFU(10, 10);
+memoLFU(10, 10);
+memoLFU(20, 20);
+memoLFU(10, 10);
+memoLFU(30, 30);
+memoLFU(40, 40);
+memoLFU(40, 40);
