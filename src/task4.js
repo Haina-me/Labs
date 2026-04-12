@@ -3,8 +3,9 @@ class PriorityQueue {
     this.items = [];
   }
 
-  enqueueForpriority(item, priority) {
-    const newItem = { item, priority };
+  enqueue(item, priority) {
+    const timestamp = Date.now();
+    const newItem = { item, priority, timestamp };
     let added = false;
 
     for (let i = 0; i < this.items.length; i++) {
@@ -19,34 +20,73 @@ class PriorityQueue {
       this.items.push(newItem);
     }
   }
-}
 
-dequeueHighest() {
-  if (this.items.length === 0) {
-    return null;
-  }
-  return this.items.shift(); // видаляє та повертає перший елемент з черги (найвищий пріоритет)
-}
 
-dequeueLowest() {
-  if (this.items.length === 0) {
-    return null;
-  }
-  return this.items.pop(); // видаляє та повертає останній елемент з черги (найнижчий пріоритет)
-}
+  dequeue(criteria) {
+    if (this.isEmpty()) return null;
 
-peek() {
-  if (this.items.length === 0) {
-    return null;
+    switch (criteria) {
+      case 'highest': return this.items.shift();
+      case 'lowest': return this.items.pop();
+      case 'oldest': return this.removeByTime('oldest');
+      case 'newest': return this.removeByTime('newest');
+      default: return null;
+    }
   }
 
-  return this.items[0]; // повертає перший елемент з черги без видалення (найвищий пріоритет)
-  return this.items[this.items.length - 1]; // повертає останній елемент з черги без видалення (найнижчий пріоритет)
+  peek(criteria) {
+    if (this.isEmpty()) return null;
+
+    switch (criteria) {
+      case 'highest': return this.items[0];
+      case 'lowest': return this.items[this.items.length - 1];
+      case 'oldest': return this.findByTime('oldest').item;
+      case 'newest': return this.findByTime('newest').item;
+      default: return null;
+    }
+  }
+
+  isEmpty() {
+    return this.items.length === 0;
+  }
+
+  findByTime(type) {
+    let targetIdx = 0;
+    for (let i = 1; i < this.items.length; i++) {
+      const isOlder = this.items[i].timestamp < this.items[targetIdx].timestamp;
+      const condition = (type === 'oldest') ? isOlder : !isOlder;
+      if (condition) targetIdx = i;
+    }
+    return { item: this.items[targetIdx], index: targetIdx };
+  }
+
+  removeByTime(type) {
+    const data = this.findByTime(type);
+    return this.items.splice(data.index, 1)[0];
+  }
 }
 
-isEmpty() {
-  return this.items.length === 0;
-}
-//const myQueue = new PriorityQueue(); - myQueue це мій об'єкт який я створила за допомогою класу PriorityQueue
-//myQueue = { items: [] } - це те що містить мій об'єкт, тобто масив items який є порожнім на початку
-//myQueue.enqueueForpriority('task1', 2) - це виклик методу enqueue для додавання елемента 'task1' з пріоритетом 2 до черги
+// Тест
+const myQueue = new PriorityQueue();
+
+myQueue.enqueue('A(2)', 2);
+
+setTimeout(() => {
+  myQueue.enqueue('Б(1)', 1);
+  setTimeout(() => {
+    myQueue.enqueue('В(3)', 3);
+
+    console.log("peek");
+    console.log("highest:", myQueue.peek('highest').item);
+    console.log("lowest:", myQueue.peek('lowest').item);
+    console.log("oldest:", myQueue.peek('oldest').item);
+    console.log("newest:", myQueue.peek('newest').item);
+
+    console.log("\n dequeue");
+
+    console.log("видаляємо highest:", myQueue.dequeue('highest').item);
+
+    console.log("видаляємо oldest:", myQueue.dequeue('oldest').item);
+
+  }, 100);
+}, 100);
